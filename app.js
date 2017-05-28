@@ -149,7 +149,7 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Line.js'], function
 
   var wallPoints = [];
   var walls = [];
-  var radius = 500;
+  var radius = Math.max(width,height);
   var sides = 5;
   for(var a=0;a<=2*Math.PI;a+=2*Math.PI/sides) {
     wallPoints.push({
@@ -168,7 +168,6 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Line.js'], function
     if(!pause) {
       //Update tank
       tank.update(delta);
-      tank.velocity = {x:0,y:0};
       //Update bullets
       for(var i=0;i<bullets.length;i++) {
         bullets[i].update(delta);
