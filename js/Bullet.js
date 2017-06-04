@@ -5,6 +5,7 @@ define(['js/Line.js'],function(Line) {
   var Bullet = function(x,y,radius,angle,mag) {
     this.sprite = new PIXI.Sprite();
     this.sprite.position.set(x,y);
+    this.radius = radius;
     this.angle = angle;
     this.sprite.anchor.set(0.5);
     this.intersections = [];
@@ -42,7 +43,7 @@ define(['js/Line.js'],function(Line) {
         x: x,
         y: y
       };
-      for(var i=0;i<30;i++) {
+      for(var i=0;i<10;i++) {
         var hits = [];
         var hitLines = [];
         var tragectory = new Line(current.x,current.y,current.x+Math.cos(currentAngle)*radius,current.y+Math.sin(currentAngle)*radius);
@@ -112,12 +113,18 @@ define(['js/Line.js'],function(Line) {
         }
       }
       //Generate graphics
-      this.advancedGraphics.lineStyle(10,0,1);
       for(var i=1;i<this.intersections.length;i++) {
+        this.advancedGraphics.lineStyle(this.radius,0x880000,0.25);
         this.advancedGraphics.moveTo(this.intersections[i-1].x,this.intersections[i-1].y);
         this.advancedGraphics.lineTo(this.intersections[i].x,this.intersections[i].y);
-        if(this.intersections[i].angleOut != undefined && this.intersections[i].angleOut != null) {
+        if(i < this.intersections.length-1) {
+          this.advancedGraphics.lineStyle(5,0,0.25)
           this.advancedGraphics.arc(this.intersections[i].x,this.intersections[i].y,100,this.intersections[i].angleIn-Math.PI,this.intersections[i].angleOut);
+        } else {
+          this.advancedGraphics.lineStyle(5,0,0.25);
+          this.advancedGraphics.beginFill(0x008800,0.5);
+          this.advancedGraphics.drawCircle(this.intersections[i].x,this.intersections[i].y,100);
+          this.advancedGraphics.endFill();
         }
       }
     };

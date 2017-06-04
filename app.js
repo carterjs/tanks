@@ -206,6 +206,8 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
         scene.removeChild(aim);
         aim = shot.advancedGraphics;
         scene.addChild(aim);
+      } else {
+        scene.removeChild(aim);
       }
 
       // pathGraphics.clear();
