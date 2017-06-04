@@ -5,7 +5,7 @@ define(function() {
       y: y
     },
     this.scale = 0.1,
-    this.targetScale = 1,
+    this.targetScale = 0.25,
     this.scaleProgress = 0;
   }
   Camera.prototype.setTarget = function(x,y) {

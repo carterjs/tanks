@@ -1,17 +1,25 @@
-requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Line.js'], function(PIXI,Camera,Tank,Line) {
+requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], function(PIXI,Camera,Tank,Shape) {
 
   //Renderer setup
   var renderer = new PIXI.autoDetectRenderer(100,100);
   renderer.backgroundColor = 0x334422;
   //Sizing and resizing
-  renderer.view.style.display = "block";
+  renderer.view.style.position = "fixed";
+  renderer.view.style.top = 0 + "px";
+  renderer.view.style.right = 0 + "px";
+  renderer.view.style.bottom = 0 + "px";
+  renderer.view.style.left = 0 + "px";
   var width = 100,
-  height = 100;
+  height = 100,
+  scale = window.devicePixelRatio;
+  console.log("Device pixel ratio = " + scale);
   //Resize the canvas to the new window size
   var resize = function() {
-    width = window.innerWidth;
-    height = window.innerHeight;
+    width = window.innerWidth*scale;
+    height = window.innerHeight*scale;
     renderer.resize(width,height);
+    renderer.view.style.width = width/scale + "px";
+    renderer.view.style.height = height/scale + "px";
   }
   resize();
   //List of functions called when the window is resized
@@ -107,39 +115,76 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Line.js'], function
 
   var camera = new Camera(0,0);
 
-  var tank = new Tank(100,100,85,100,0x338844);
+  var wallPoints = [];
+  var shapes = [];
+  var sides = 9;
+  var radius = Math.max(width,height);
+  var tankHeight = (width+height)/8;
+  for(var a=0;a<=2*Math.PI;a+=2*Math.PI/sides) {
+    wallPoints.push({
+      x: Math.sin(a) * radius,
+      y: Math.cos(a) * radius
+    });
+  }
+
+  var walls = new Shape(wallPoints,0xffffff,0.05,3,0x000000,0.5);
+  scene.addChild(walls.graphics);
+  shapes.push(walls);
+
+  var tank = new Tank(0,0,tankHeight/1.25,tankHeight,0x338844);
   scene.addChild(tank.sprite);
 
-  var enemy = new Tank(200,200,80,95,0x884433);
-  scene.addChild(enemy.sprite);
-
   var touchpad = new PIXI.Sprite();
+  var touchpadGraphics = new PIXI.Graphics();
+  touchpadGraphics.lineStyle(5);
+  touchpadGraphics.drawRect(0,0,width,height);
+  touchpad.texture = touchpadGraphics.generateTexture();
   touchpad.interactive = true;
-  touchpad.position.set(0,0);
-  touchpad.width = width;
-  touchpad.height = height;
-  var start = {
-    x: width/2,
-    y: height/2
-  },
+  touchpad.anchor.set(0.5);
+  var start,
   direction = {
     x: 0,
     y: 0
   },
-  lastTouch = 0;
+  lastTouch = 0,
+  shoot = false,
+  path = [];
+
+  var pathGraphics = new PIXI.Graphics();
+  scene.addChild(pathGraphics);
+
+  var setTouchpad = function() {
+    touchpad.position.set(width/2,height/2);
+    touchpad.width = width;
+    touchpad.height = height;
+  }
+  setTouchpad();
+  resizeCallbacks.push(setTouchpad);
+
+  var aim = new PIXI.Graphics();
+  scene.addChild(aim);
 
   touchpad.on('pointerdown',function(e) {
     direction.x = e.data.global.x;
     direction.y = e.data.global.y;
     if(now - lastTouch < 250) {
-      var bullet = tank.shoot();bullet.intersect(walls,2*radius);
-      bullets.push(bullet);
-      scene.addChild(bullet.sprite);
+      shoot = true;
     }
     lastTouch = now;
   }).on('pointermove',function(e) {
     direction.x = e.data.global.x;
     direction.y = e.data.global.y;
+  }).on('pointerup',function() {
+    if(shoot) {
+      scene.removeChild(aim.advancedGraphics);
+      var bullet = tank.shoot();
+      bullet.intersect(shapes,4*radius);
+      path = new Array({x: bullet.sprite.x,y: bullet.sprite.y}).concat(bullet.intersections);
+      console.log(path);
+      bullets.push(bullet);
+      scene.addChild(bullet.sprite);
+      shoot = false;
+    }
   });
   stage.addChild(touchpad);
 
@@ -147,38 +192,83 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Line.js'], function
 
   var acceleration = 0.005;
 
-  var wallPoints = [];
-  var walls = [];
-  var radius = Math.max(width,height);
-  var sides = 5;
-  for(var a=0;a<=2*Math.PI;a+=2*Math.PI/sides) {
-    wallPoints.push({
-      x: Math.sin(a) * radius,
-      y: Math.cos(a) * radius
-    });
-    if(wallPoints.length > 1) {
-      var wall = new Line(wallPoints[wallPoints.length-2].x,wallPoints[wallPoints.length-2].y,wallPoints[wallPoints.length-1].x,wallPoints[wallPoints.length-1].y);
-      scene.addChild(wall.graphics);
-      walls.push(wall);
-    }
-  }
+  var avg,
+  min,
+  max;
 
   function update() {
 
     if(!pause) {
+
+      if(shoot) {
+        var shot = tank.shoot();
+        shot.intersect(shapes,4*radius);
+        scene.removeChild(aim);
+        aim = shot.advancedGraphics;
+        scene.addChild(aim);
+      }
+
+      // pathGraphics.clear();
+      //
+      // pathGraphics.lineStyle(50,0,0.1);
+      //
+      // for(var i=1;i<path.length;i++) {
+      //   pathGraphics.moveTo(path[i-1].x,path[i-1].y);
+      //   pathGraphics.lineTo(path[i].x,path[i].y);
+      // }
+
       //Update tank
       tank.update(delta);
+
+      avg = {
+        x: tank.sprite.x - width/2,
+        y: tank.sprite.y - height/2
+      };
+      min = {
+        x: Infinity,
+        y: Infinity
+      },
+      max = {
+        x: -Infinity,
+        y: -Infinity
+      },
+      scale;
+
       //Update bullets
       for(var i=0;i<bullets.length;i++) {
         bullets[i].update(delta);
+        avg.x += bullets[i].sprite.x - width/2;
+        avg.y += bullets[i].sprite.y - width/2;
+        if(bullets[i].sprite.x < min.x) {
+          min.x = bullets[i].sprite.x;
+        }
+        if(bullets[i].sprite.y < min.y) {
+          min.y = bullets[i].sprite.y;
+        }
+        if(bullets[i].sprite.x > max.x) {
+          max.x = bullets[i].sprite.x;
+        }
+        if(bullets[i].sprite.y > max.y) {
+          max.y = bullets[i].sprite.y;
+        }
       }
+      avg.x *= 1/(bullets.length+1);
+      avg.y *= 1/(bullets.length+1);
+
+      range = Math.max(max.y-min.y,max.x-min.x);
+      scale = Math.max(width,height)/range;
+      if(Math.abs(scale) > 0.1 && Math.abs(scale) < 2) {
+        //camera.targetScale = scale;
+      }
+
       //Movement by touchpad
-      tank.acceleration.x = (direction.x-start.x)/(width/2);
-      tank.acceleration.y = (direction.y-start.y)/(height/2);
+      tank.acceleration.x = (direction.x-width/2)/(width/2);
+      tank.acceleration.y = (direction.y-height/2)/(height/2);
     }
     //Camera
     camera.update(delta);
     camera.setTarget(tank.sprite.position.x-(width/2/camera.scale),tank.sprite.position.y-(height/2/camera.scale));
+    //camera.setTarget(avg.x,avg.y);
     scene.scale.set(camera.scale);
     scene.position.set(camera.offset.x*camera.scale,camera.offset.y*camera.scale);
     //Fading elements in

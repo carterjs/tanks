@@ -14,11 +14,12 @@ define(function() {
       this.graphics.moveTo(this.x1,this.y1);
       this.graphics.lineTo(this.x2,this.y2);
     },
-    this.update();
+    this.update(),
     this.intersect = function(line) {
-      var x = (line.B*this.C - this.B*line.C)/(this.A*line.B - line.A*this.B);
-      var y = (this.A*line.C - line.A*this.C)/(this.A*line.B - line.A*this.B);
-      if(x >= Math.min(line.x1,line.x2) && x <= Math.max(line.x1,line.x2) && y >= Math.min(line.y1,line.y2) && y <= Math.max(line.y1,line.y2) && x >= Math.min(this.x1,this.x2) && x <= Math.max(this.x1,this.x2) && y >= Math.min(this.y1,this.y2) && y <= Math.max(this.y1,this.y2)) {
+      var denom = (this.A*line.B - line.A*this.B);
+      var x = (line.B*this.C - this.B*line.C)/denom;
+      var y = (this.A*line.C - line.A*this.C)/denom;
+      if((x >= Math.min(line.x1,line.x2) && x <= Math.max(line.x1,line.x2) || y >= Math.min(line.y1,line.y2) && y <= Math.max(line.y1,line.y2)) && (x >= Math.min(this.x1,this.x2) && x <= Math.max(this.x1,this.x2) || y >= Math.min(this.y1,this.y2) && y <= Math.max(this.y1,this.y2)) && denom !== 0) {
         return {
           x: x,
           y: y
@@ -26,7 +27,10 @@ define(function() {
       } else {
         return false;
       }
-    }
+    },
+    this.getAngle = function() {
+      return Math.atan2(this.y2-this.y1,this.x2-this.x1);
+    };
   }
   return Line;
 });

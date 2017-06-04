@@ -2,6 +2,8 @@ define(['lib/pixi.min.js','js/Bullet.js'],function(PIXI,Bullet) {
    var Tank = function(x,y,width,height,color) {
     this.x = x,
     this.y = y,
+    this.width = width,
+    this.height = height,
     this.acceleration = {
       x: 0.1,
       y: 0
@@ -57,7 +59,7 @@ define(['lib/pixi.min.js','js/Bullet.js'],function(PIXI,Bullet) {
   Tank.prototype.shoot = function() {
       var startY = this.sprite.y + Math.sin(this.barrel.rotation - Math.PI/2) * this.body.height/2;
         var startX = this.sprite.x + Math.cos(this.barrel.rotation - Math.PI/2) * this.body.height/2;
-      return new Bullet(startX,startY,5,this.barrel.rotation-Math.PI/2,10);
+      return new Bullet(startX,startY,this.width/16,this.barrel.rotation-Math.PI/2,50);
   }
   Tank.prototype.update = function(delta) {
     this.velocity.y = Math.max(-10,Math.min(10,this.velocity.y*0.9+this.acceleration.y));
@@ -74,9 +76,9 @@ define(['lib/pixi.min.js','js/Bullet.js'],function(PIXI,Bullet) {
         }
       } else {
         if(this.targetAngle > this.barrel.rotation) {
-          this.barrel.rotation += (Math.abs(this.targetAngle - this.barrel.rotation))/5;
+          this.barrel.rotation += (Math.abs(this.targetAngle - this.barrel.rotation))/5 * delta;
         } else {
-          this.barrel.rotation -= (Math.abs(this.targetAngle - this.barrel.rotation))/5;
+          this.barrel.rotation -= (Math.abs(this.targetAngle - this.barrel.rotation))/5 * delta;
         }
       }
       if(this.barrel.rotation > 2*Math.PI) {
