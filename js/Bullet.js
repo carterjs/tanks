@@ -3,6 +3,7 @@ define(['js/Line.js'],function(Line) {
     return Math.sqrt(Math.pow(y2-y1,2) + Math.pow(x2-x1,2));
   }
   var Bullet = function(x,y,radius,angle,mag) {
+    this.active = true;
     this.sprite = new PIXI.Sprite();
     this.sprite.position.set(x,y);
     this.radius = radius;
@@ -35,46 +36,37 @@ define(['js/Line.js'],function(Line) {
         if(this.progress > 1) {
           this.progress = 1;
         }
+      } else {
+        this.active = false;
       }
     };
-    this.intersect = function(shapes,radius) {
+    this.intersect = function(shapes,bounces,radius) {
       var currentAngle = this.angle;
       var current = {
         x: x,
         y: y
       };
-      for(var i=0;i<10;i++) {
+      for(var i=0;i<bounces;i++) {
         var hits = [];
         var hitLines = [];
         var tragectory = new Line(current.x,current.y,current.x+Math.cos(currentAngle)*radius,current.y+Math.sin(currentAngle)*radius);
+        var record = Infinity;
+        var closest = null;
         for(var j=0;j<shapes.length;j++) {
           for(var k=0;k<shapes[j].lines.length;k++) {
             var intersection = tragectory.intersect(shapes[j].lines[k]);
-            if(intersection !== false && shapes[j].lines[k]) {
-              var previous = false;
-              for(var l=0;l<this.intersections.length;l++) {
-                if(Math.abs(intersection.x - this.intersections[l].x) < 1 && Math.abs(intersection.y - this.intersections[l].y) < 1) {
-                  previous = true;
-                }
+            if(intersection != false) {
+              var distance = getDistance(current.x,current.y,intersection.x,intersection.y);
+              if(distance < record) {
+                record = distance;
+                closest = hits.length;
               }
-              if(!previous) {
-                hits.push(intersection);
-                hitLines.push(shapes[j].lines[k]);
-              }
+              hits.push(intersection);
+              hitLines.push(shapes[j].lines[k]);
             }
           }
         }
         if(hits.length > 0) {
-          var record = Infinity;
-          var closest = 0;
-          for(var j=0;j<hits.length;j++) {
-            var distance = getDistance(x,y,hits[j].x,hits[j].y);
-            if(distance < record) {
-              record = distance;
-              closest = j;
-            }
-          }
-          //this.intersections.push(hits[closest]);
           var normal = hitLines[closest].getAngle()+Math.PI/2;
           var nextAngle = 2 * normal - Math.PI - currentAngle;
           this.intersections.push({
@@ -117,10 +109,7 @@ define(['js/Line.js'],function(Line) {
         this.advancedGraphics.lineStyle(this.radius,0x880000,0.25);
         this.advancedGraphics.moveTo(this.intersections[i-1].x,this.intersections[i-1].y);
         this.advancedGraphics.lineTo(this.intersections[i].x,this.intersections[i].y);
-        if(i < this.intersections.length-1) {
-          this.advancedGraphics.lineStyle(5,0,0.25)
-          this.advancedGraphics.arc(this.intersections[i].x,this.intersections[i].y,100,this.intersections[i].angleIn-Math.PI,this.intersections[i].angleOut);
-        } else {
+        if(i == this.intersections.length-1) {
           this.advancedGraphics.lineStyle(5,0,0.25);
           this.advancedGraphics.beginFill(0x008800,0.5);
           this.advancedGraphics.drawCircle(this.intersections[i].x,this.intersections[i].y,100);

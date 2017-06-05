@@ -5,7 +5,7 @@ define(function() {
       y: y
     },
     this.scale = 0.1,
-    this.targetScale = 0.25,
+    this.targetScale = 1,
     this.scaleProgress = 0;
   }
   Camera.prototype.setTarget = function(x,y) {
@@ -13,7 +13,7 @@ define(function() {
     this.offset.y = -y;
   }
   Camera.prototype.update = function(delta) {
-    this.scale += (this.targetScale-this.scale)/10*delta;
+    this.scale += (this.targetScale-this.scale)/50*delta;
   }
   return Camera;
 });

@@ -28,7 +28,7 @@ define(['lib/pixi.min.js','js/Bullet.js'],function(PIXI,Bullet) {
     this.barrel.tint = 0xeeeeee;
     var bodyGraphics = new PIXI.Graphics();
     bodyGraphics.beginFill(color,1);
-    bodyGraphics.lineStyle(width/8,0,0.5);
+    bodyGraphics.lineStyle(width/16,0,0.5);
     bodyGraphics.moveTo(width/8,0);
     bodyGraphics.lineTo(width*(7/8),0);
     bodyGraphics.lineTo(width,height/8);

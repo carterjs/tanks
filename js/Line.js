@@ -3,10 +3,10 @@ define(function() {
     this.x1 = x1,
     this.y1 = y1,
     this.x2 = x2,
-    this.y2 = y2,
+    this.y2 = y2;
     this.graphics = new PIXI.Graphics(),
     this.update = function() {
-      this.A = this.y2 - this.y1,
+      this.A = this.y2 - this.y1;
       this.B = this.x1 - this.x2;
       this.C = this.A * this.x1 + this.B * this.y1;
       this.graphics.clear();

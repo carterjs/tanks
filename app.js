@@ -115,21 +115,60 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
 
   var camera = new Camera(0,0);
 
-  var wallPoints = [];
   var shapes = [];
   var sides = 9;
-  var radius = Math.max(width,height);
-  var tankHeight = (width+height)/8;
-  for(var a=0;a<=2*Math.PI;a+=2*Math.PI/sides) {
-    wallPoints.push({
-      x: Math.sin(a) * radius,
-      y: Math.cos(a) * radius
+  var radius = Math.max(width,height)/2;
+  var tankHeight = (width+height)/(2*6);
+
+  function rectPoints(x,y,width,height) {
+    var points = [];
+    points.push({
+      x: x,
+      y: y
     });
+    points.push({
+      x: x+width,
+      y: y
+    });
+    points.push({
+      x: x+width,
+      y: y+height
+    });
+    points.push({
+      x: x,
+      y: y+height
+    });
+    return points;
   }
 
-  var walls = new Shape(wallPoints,0xffffff,0.05,3,0x000000,0.5);
+  function scew(points,range) {
+    var newPoints = points;
+    for(var i=0;i<points.length;i++) {
+      points[i].x += (Math.random()-0.5) * range/2;
+      points[i].y += (Math.random()-0.5) * range/2;
+    }
+    return newPoints;
+  }
+
+  var walls = new Shape(scew(rectPoints(-radius,-radius,radius*2,radius*2),radius/4),0xffffff,0.1,5,0,0.5);
   scene.addChild(walls.graphics);
   shapes.push(walls);
+
+  var topLeft = new Shape(scew(rectPoints(-radius*(3/4),-radius*(3/4),radius/2,radius/2),radius/8),0xff0000,0.25,5,0,0.5);
+  scene.addChild(topLeft.graphics);
+  shapes.push(topLeft);
+
+  var topRight = new Shape(scew(rectPoints(radius/4,-radius*(3/4),radius/2,radius/2),radius/8),0x00ff00,0.25,5,0,0.5);
+  scene.addChild(topRight.graphics);
+  shapes.push(topRight);
+
+  var bottomLeft = new Shape(scew(rectPoints(-radius*(3/4),radius/4,radius/2,radius/2),radius/8),0x0000ff,0.25,5,0,0.5);
+  scene.addChild(bottomLeft.graphics);
+  shapes.push(bottomLeft);
+
+  var bottomRight = new Shape(scew(rectPoints(radius/4,radius/4,radius/2,radius/2),radius/8),0xff0000,0.25,5,0,0.5);
+  scene.addChild(bottomRight.graphics);
+  shapes.push(bottomRight);
 
   var tank = new Tank(0,0,tankHeight/1.25,tankHeight,0x338844);
   scene.addChild(tank.sprite);
@@ -148,10 +187,7 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
   },
   lastTouch = 0,
   shoot = false,
-  path = [];
-
-  var pathGraphics = new PIXI.Graphics();
-  scene.addChild(pathGraphics);
+  bounces = 20;
 
   var setTouchpad = function() {
     touchpad.position.set(width/2,height/2);
@@ -178,7 +214,7 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
     if(shoot) {
       scene.removeChild(aim.advancedGraphics);
       var bullet = tank.shoot();
-      bullet.intersect(shapes,4*radius);
+      bullet.intersect(shapes,bounces,4*radius);
       path = new Array({x: bullet.sprite.x,y: bullet.sprite.y}).concat(bullet.intersections);
       console.log(path);
       bullets.push(bullet);
@@ -192,9 +228,10 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
 
   var acceleration = 0.005;
 
-  var avg,
-  min,
-  max;
+  var min,
+  max,
+  bounds = new PIXI.Graphics();
+  scene.addChild(bounds);
 
   function update() {
 
@@ -202,7 +239,7 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
 
       if(shoot) {
         var shot = tank.shoot();
-        shot.intersect(shapes,4*radius);
+        shot.intersect(shapes,bounces,4*radius);
         scene.removeChild(aim);
         aim = shot.advancedGraphics;
         scene.addChild(aim);
@@ -210,22 +247,9 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
         scene.removeChild(aim);
       }
 
-      // pathGraphics.clear();
-      //
-      // pathGraphics.lineStyle(50,0,0.1);
-      //
-      // for(var i=1;i<path.length;i++) {
-      //   pathGraphics.moveTo(path[i-1].x,path[i-1].y);
-      //   pathGraphics.lineTo(path[i].x,path[i].y);
-      // }
-
       //Update tank
       tank.update(delta);
 
-      avg = {
-        x: tank.sprite.x - width/2,
-        y: tank.sprite.y - height/2
-      };
       min = {
         x: Infinity,
         y: Infinity
@@ -236,31 +260,47 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
       },
       scale;
 
+      if(tank.sprite.x < min.x) {
+        min.x = tank.sprite.x;
+      }
+      if(tank.sprite.y < min.y) {
+        min.y = tank.sprite.y;
+      }
+      if(tank.sprite.x > max.x) {
+        max.x = tank.sprite.x;
+      }
+      if(tank.sprite.y > max.y) {
+        max.y = tank.sprite.y;
+      }
+
       //Update bullets
       for(var i=0;i<bullets.length;i++) {
         bullets[i].update(delta);
-        avg.x += bullets[i].sprite.x - width/2;
-        avg.y += bullets[i].sprite.y - width/2;
-        if(bullets[i].sprite.x < min.x) {
-          min.x = bullets[i].sprite.x;
-        }
-        if(bullets[i].sprite.y < min.y) {
-          min.y = bullets[i].sprite.y;
-        }
-        if(bullets[i].sprite.x > max.x) {
-          max.x = bullets[i].sprite.x;
-        }
-        if(bullets[i].sprite.y > max.y) {
-          max.y = bullets[i].sprite.y;
+        if(bullets[i].active) {
+          if(bullets[i].sprite.x < min.x) {
+            min.x = bullets[i].sprite.x;
+          }
+          if(bullets[i].sprite.y < min.y) {
+            min.y = bullets[i].sprite.y;
+          }
+          if(bullets[i].sprite.x > max.x) {
+            max.x = bullets[i].sprite.x;
+          }
+          if(bullets[i].sprite.y > max.y) {
+            max.y = bullets[i].sprite.y;
+          }
         }
       }
-      avg.x *= 1/(bullets.length+1);
-      avg.y *= 1/(bullets.length+1);
 
-      range = Math.max(max.y-min.y,max.x-min.x);
-      scale = Math.max(width,height)/range;
-      if(Math.abs(scale) > 0.1 && Math.abs(scale) < 2) {
-        //camera.targetScale = scale;
+      var range = Math.max(max.x-min.x,max.y-min.y);
+      var calcScale = Math.max(Math.min(width,height)/(2*range),0.5);
+      if(calcScale == Infinity) {
+        calcScale = 1;
+      }
+      if(calcScale > 0.1 && calcScale < 2) {
+        if(calcScale < camera.targetScale || calcScale == 1) {
+          camera.targetScale = calcScale;
+        }
       }
 
       //Movement by touchpad
@@ -270,7 +310,6 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
     //Camera
     camera.update(delta);
     camera.setTarget(tank.sprite.position.x-(width/2/camera.scale),tank.sprite.position.y-(height/2/camera.scale));
-    //camera.setTarget(avg.x,avg.y);
     scene.scale.set(camera.scale);
     scene.position.set(camera.offset.x*camera.scale,camera.offset.y*camera.scale);
     //Fading elements in
