@@ -106,7 +106,7 @@ define(['js/Line.js'],function(Line) {
       }
       //Generate graphics
       for(var i=1;i<this.intersections.length;i++) {
-        this.advancedGraphics.lineStyle(this.radius,0x880000,0.25);
+        this.advancedGraphics.lineStyle(this.radius/2,0x880000,0.25/i+0.25);
         this.advancedGraphics.moveTo(this.intersections[i-1].x,this.intersections[i-1].y);
         this.advancedGraphics.lineTo(this.intersections[i].x,this.intersections[i].y);
         if(i == this.intersections.length-1) {

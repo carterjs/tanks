@@ -187,7 +187,7 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
   },
   lastTouch = 0,
   shoot = false,
-  bounces = 20;
+  bounces = 5;
 
   var setTouchpad = function() {
     touchpad.position.set(width/2,height/2);
