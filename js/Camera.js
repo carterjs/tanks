@@ -13,7 +13,7 @@ define(function() {
     this.offset.y = -y;
   }
   Camera.prototype.update = function(delta) {
-    this.scale += (this.targetScale-this.scale)/50*delta;
+    this.scale += (this.targetScale-this.scale)/25*delta;
   }
   return Camera;
 });

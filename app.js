@@ -1,4 +1,4 @@
-requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], function(PIXI,Camera,Tank,Shape) {
+requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js','js/Light.js'], function(PIXI,Camera,Tank,Shape,Light) {
 
   //Renderer setup
   var renderer = new PIXI.autoDetectRenderer(100,100);
@@ -12,7 +12,6 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
   var width = 100,
   height = 100,
   scale = window.devicePixelRatio;
-  console.log("Device pixel ratio = " + scale);
   //Resize the canvas to the new window size
   var resize = function() {
     width = window.innerWidth*scale;
@@ -81,7 +80,6 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
     switch(key) {
       case 32:
       pause = !pause;
-      console.log(pause);
       resizePauseScreen();
       break;
     }
@@ -215,8 +213,6 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
       scene.removeChild(aim.advancedGraphics);
       var bullet = tank.shoot();
       bullet.intersect(shapes,bounces,4*radius);
-      path = new Array({x: bullet.sprite.x,y: bullet.sprite.y}).concat(bullet.intersections);
-      console.log(path);
       bullets.push(bullet);
       scene.addChild(bullet.sprite);
       shoot = false;
@@ -233,9 +229,31 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
   bounds = new PIXI.Graphics();
   scene.addChild(bounds);
 
+  var light = new Light(0,0,1000);
+  var lightGraphics = new PIXI.Graphics();
+
+  scene.addChild(lightGraphics);
+
   function update() {
 
     if(!pause) {
+
+      //Light
+      lightGraphics.clear();
+      lightGraphics.beginFill(0xffffff,0.1);
+      lightGraphics.lineStyle(1,0,1);
+      for(var i=1;i<light.outline.length;i++) {
+        if(i == 1) {
+          lightGraphics.moveTo(light.outline[0].x,light.outline[0].y);
+        }
+        lightGraphics.lineTo(light.outline[i].x,light.outline[i].y);
+      }
+      if(light.outline.length > 1) {
+        lightGraphics.lineTo(light.outline[0].x,light.outline[0].y);
+      }
+      lightGraphics.endFill();
+
+      light.shine(shapes);
 
       if(shoot) {
         var shot = tank.shoot();
@@ -249,6 +267,8 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
 
       //Update tank
       tank.update(delta);
+      light.center.x = tank.sprite.x;
+      light.center.y = tank.sprite.y;
 
       min = {
         x: Infinity,
@@ -260,34 +280,37 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js'], functio
       },
       scale;
 
-      if(tank.sprite.x < min.x) {
-        min.x = tank.sprite.x;
+
+      if(tank.x < min.x) {
+        min.x = tank.x;
       }
-      if(tank.sprite.y < min.y) {
-        min.y = tank.sprite.y;
+      if(tank.y < min.y) {
+        min.y = tank.y;
       }
-      if(tank.sprite.x > max.x) {
-        max.x = tank.sprite.x;
+      if(tank.x > max.x) {
+        max.x = tank.x;
       }
-      if(tank.sprite.y > max.y) {
-        max.y = tank.sprite.y;
+      if(tank.y > max.y) {
+        max.y = tank.y;
       }
 
       //Update bullets
       for(var i=0;i<bullets.length;i++) {
         bullets[i].update(delta);
         if(bullets[i].active) {
-          if(bullets[i].sprite.x < min.x) {
-            min.x = bullets[i].sprite.x;
-          }
-          if(bullets[i].sprite.y < min.y) {
-            min.y = bullets[i].sprite.y;
-          }
-          if(bullets[i].sprite.x > max.x) {
-            max.x = bullets[i].sprite.x;
-          }
-          if(bullets[i].sprite.y > max.y) {
-            max.y = bullets[i].sprite.y;
+          for(var j=0;j<bullets[i].intersections.length;j++) {
+            if(bullets[i].sprite.x < min.x) {
+              min.x = bullets[i].intersections[j].x;
+            }
+            if(bullets[i].sprite.y < min.y) {
+              min.y = bullets[i].intersections[j].y;
+            }
+            if(bullets[i].sprite.x > max.x) {
+              max.x = bullets[i].intersections[j].x;
+            }
+            if(bullets[i].sprite.y > max.y) {
+              max.y = bullets[i].intersections[j].y;
+            }
           }
         }
       }

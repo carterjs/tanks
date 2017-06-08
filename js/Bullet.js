@@ -1,4 +1,4 @@
-define(['js/Line.js'],function(Line) {
+define(['js/LineSegment.js'],function(LineSegment) {
   function getDistance(x1,y1,x2,y2) {
     return Math.sqrt(Math.pow(y2-y1,2) + Math.pow(x2-x1,2));
   }
@@ -49,7 +49,7 @@ define(['js/Line.js'],function(Line) {
       for(var i=0;i<bounces;i++) {
         var hits = [];
         var hitLines = [];
-        var tragectory = new Line(current.x,current.y,current.x+Math.cos(currentAngle)*radius,current.y+Math.sin(currentAngle)*radius);
+        var tragectory = new LineSegment(current.x,current.y,current.x+Math.cos(currentAngle)*radius,current.y+Math.sin(currentAngle)*radius);
         var record = Infinity;
         var closest = null;
         for(var j=0;j<shapes.length;j++) {
@@ -110,9 +110,9 @@ define(['js/Line.js'],function(Line) {
         this.advancedGraphics.moveTo(this.intersections[i-1].x,this.intersections[i-1].y);
         this.advancedGraphics.lineTo(this.intersections[i].x,this.intersections[i].y);
         if(i == this.intersections.length-1) {
-          this.advancedGraphics.lineStyle(5,0,0.25);
-          this.advancedGraphics.beginFill(0x008800,0.5);
-          this.advancedGraphics.drawCircle(this.intersections[i].x,this.intersections[i].y,100);
+          this.advancedGraphics.lineStyle(0);
+          this.advancedGraphics.beginFill(0x880000,0.5);
+          this.advancedGraphics.drawCircle(this.intersections[i].x,this.intersections[i].y,this.radius);
           this.advancedGraphics.endFill();
         }
       }
