@@ -239,7 +239,7 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js','js/Light
     if(!pause) {
 
       //Light
-      lightGraphics.clear();
+      /*lightGraphics.clear();
       lightGraphics.beginFill(0xffffff,0.1);
       lightGraphics.lineStyle(1,0,1);
       for(var i=1;i<light.outline.length;i++) {
@@ -253,7 +253,7 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js','js/Light
       }
       lightGraphics.endFill();
 
-      light.shine(shapes);
+      light.shine(shapes);*/
 
       if(shoot) {
         var shot = tank.shoot();

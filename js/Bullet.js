@@ -78,7 +78,7 @@ define(['js/LineSegment.js'],function(LineSegment) {
           });
           current.x = hits[closest].x - Math.cos(currentAngle);
           current.y = hits[closest].y - Math.sin(currentAngle);
-          currentAngle = nextAngle % (Math.PI*2);
+          currentAngle = nextAngle;
         }
       }
       //Generate path to follow
@@ -114,6 +114,41 @@ define(['js/LineSegment.js'],function(LineSegment) {
           this.advancedGraphics.beginFill(0x880000,0.5);
           this.advancedGraphics.drawCircle(this.intersections[i].x,this.intersections[i].y,this.radius);
           this.advancedGraphics.endFill();
+        } else if(i > 0) {
+          var angleIn = (this.intersections[i].angleIn-Math.PI)%(2*Math.PI);
+          var angleOut = (this.intersections[i].angleOut)%(2*Math.PI);
+          if(angleIn < 0) {
+            angleIn += 2*Math.PI;
+          }
+          if(angleOut < 0) {
+            angleOut += 2*Math.PI;
+          }
+          var startAngle = Math.min(angleIn,angleOut);
+          var endAngle = startAngle + Math.abs(angleIn-angleOut);
+          var direction = false;
+          if(Math.abs(startAngle - endAngle) > Math.PI) {
+            endAngle = -(2*Math.PI-endAngle);
+            direction = true;
+          }
+          this.advancedGraphics.lineStyle(1,0x111111,0.25);
+          this.advancedGraphics.beginFill(0x220000,0.25);
+          this.advancedGraphics.arc(this.intersections[i].x,this.intersections[i].y,2*this.radius,startAngle,endAngle,direction);
+          this.advancedGraphics.lineTo(this.intersections[i].x,this.intersections[i].y);
+          this.advancedGraphics.endFill();
+          var angle = Math.round((endAngle - startAngle)*(180/Math.PI));
+          if(direction) {
+            angle = Math.round((startAngle - endAngle)*(180/Math.PI));
+          }
+          var textAngle = startAngle + (endAngle-startAngle)/2;
+          var angleText = new PIXI.Text(angle + String.fromCharCode(176)/*"i:" + Math.round((startAngle*(180/Math.PI))*100)/100 + ";o:" + Math.round((endAngle*(180/Math.PI)))*/,{
+            font: "30px Arial",
+            fill: 0x000000,
+            alpha: 0.5
+          });
+          angleText.anchor.set(0.5);
+          angleText.position.set(this.intersections[i].x + Math.cos(textAngle) * 4 * this.radius,this.intersections[i].y + Math.sin(textAngle) * 4 * this.radius);
+          this.advancedGraphics.addChild(angleText);
+
         }
       }
     };
