@@ -1,4 +1,4 @@
-requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js','js/Light.js'], function(PIXI,Camera,Tank,Shape,Light) {
+requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js','js/Particle.js'], function(PIXI,Camera,Tank,Shape,Particle) {
 
   //Renderer setup
   var renderer = new PIXI.autoDetectRenderer(100,100);
@@ -216,6 +216,11 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js','js/Light
       bullets.push(bullet);
       scene.addChild(bullet.sprite);
       shoot = false;
+      for(var i=0;i<5;i++) {
+        var particle = new Particle(bullet.sprite.x+(Math.random()-0.5)*50,bullet.sprite.y+(Math.random()-0.5)*50,(Math.random()-0.5)*5,(Math.random()-0.5)*5,Math.random()*75,Math.random()*75,0x222222,Math.random()*500+50);
+        particles.push(particle);
+        scene.addChild(particle.sprite);
+      }
     }
   });
   stage.addChild(touchpad);
@@ -229,31 +234,19 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js','js/Light
   bounds = new PIXI.Graphics();
   scene.addChild(bounds);
 
-  var light = new Light(0,0,1000);
-  var lightGraphics = new PIXI.Graphics();
-
-  scene.addChild(lightGraphics);
+  var particles = [];
 
   function update() {
 
     if(!pause) {
 
-      //Light
-      /*lightGraphics.clear();
-      lightGraphics.beginFill(0xffffff,0.1);
-      lightGraphics.lineStyle(1,0,1);
-      for(var i=1;i<light.outline.length;i++) {
-        if(i == 1) {
-          lightGraphics.moveTo(light.outline[0].x,light.outline[0].y);
+      for(var i=0;i<particles.length;i++) {
+        particles[i].update(now,delta);
+        if(!particles[i].active) {
+          scene.removeChild(particles[i].sprite);
+          particles.splice(i,1);
         }
-        lightGraphics.lineTo(light.outline[i].x,light.outline[i].y);
       }
-      if(light.outline.length > 1) {
-        lightGraphics.lineTo(light.outline[0].x,light.outline[0].y);
-      }
-      lightGraphics.endFill();
-
-      light.shine(shapes);*/
 
       if(shoot) {
         var shot = tank.shoot();
@@ -267,8 +260,6 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js','js/Light
 
       //Update tank
       tank.update(delta);
-      light.center.x = tank.sprite.x;
-      light.center.y = tank.sprite.y;
 
       min = {
         x: Infinity,
@@ -312,6 +303,14 @@ requirejs(['lib/pixi.min.js','js/Camera.js','js/Tank.js','js/Shape.js','js/Light
               max.y = bullets[i].intersections[j].y;
             }
           }
+        } else {
+          scene.removeChild(bullets[i].sprite);
+          for(var j=0;j<10;j++) {
+            var particle = new Particle(bullets[i].sprite.x+(Math.random()-0.5)*50,bullets[i].sprite.y+(Math.random()-0.5)*50,(Math.random()-0.5)*10,(Math.random()-0.5)*10,Math.random()*50,Math.random()*50,Math.random()<0.5?0x880000:0x888800,Math.random()*150+150);
+            particles.push(particle);
+            scene.addChild(particle.sprite);
+          }
+          bullets.splice(i,1);
         }
       }
 
